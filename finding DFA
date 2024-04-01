@@ -1,0 +1,61 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+#define STATES_COUNT 3
+#define ALPHABET_SIZE 2
+
+// DFA transition table
+const int transitions[STATES_COUNT][ALPHABET_SIZE] = {
+    {0, 1},   // Transition table for state q0
+    {0, 2},   // Transition table for state q1
+    {0, 1}    // Transition table for state q2
+};
+
+// Accepting states
+const int accepting_states[] = {2};
+
+// Function to check if the string is accepted by the DFA
+bool is_accepted(const char *input_string) {
+    int current_state = 0;  // Start state is q0
+
+    // Traverse the input string and transition according to the DFA rules
+    for (int i = 0; i < strlen(input_string); i++) {
+        char symbol = input_string[i];
+        int symbol_index = symbol - '0';  // Convert char to int index
+
+        // Check if the symbol is valid
+        if (symbol_index < 0 || symbol_index >= ALPHABET_SIZE) {
+            return false;  // Reject if the symbol is not in the alphabet
+        }
+
+        // Transition to the next state
+        current_state = transitions[current_state][symbol_index];
+    }
+
+    // Check if the final state is an accepting state
+    for (int i = 0; i < sizeof(accepting_states) / sizeof(accepting_states[0]); i++) {
+        if (current_state == accepting_states[i]) {
+            return true;  // Accept if the final state is an accepting state
+        }
+    }
+
+    return false;  // Reject if the final state is not an accepting state
+}
+
+int main() {
+    // Test cases
+    char *test_cases[] = {"101", "001", "11101", "011", "00001"};
+    int num_test_cases = sizeof(test_cases) / sizeof(test_cases[0]);
+
+    // Test the DFA
+    for (int i = 0; i < num_test_cases; i++) {
+        if (is_accepted(test_cases[i])) {
+            printf("String '%s' is accepted\n", test_cases[i]);
+        } else {
+            printf("String '%s' is rejected\n", test_cases[i]);
+        }
+    }
+
+    return 0;
+}
