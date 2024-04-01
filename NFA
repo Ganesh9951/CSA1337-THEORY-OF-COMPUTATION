@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+// Define the maximum number of states and symbols
+#define MAX_STATES 100
+#define MAX_SYMBOLS 100
+
+// Define the structure for NFA
+struct NFA {
+    int numStates;
+    int numSymbols;
+    int transitions[MAX_STATES][MAX_SYMBOLS][MAX_STATES];
+    int initialState;
+    int finalStates[MAX_STATES];
+    int numFinalStates;
+};
+
+// Function to initialize the NFA
+void initNFA(struct NFA *nfa, int numStates, int numSymbols) {
+    nfa->numStates = numStates;
+    nfa->numSymbols = numSymbols;
+    nfa->initialState = 0;
+    nfa->numFinalStates = 0;
+    
+    // Initialize transitions to -1 (no transition)
+    for (int i = 0; i < MAX_STATES; i++) {
+        for (int j = 0; j < MAX_SYMBOLS; j++) {
+            for (int k = 0; k < MAX_STATES; k++) {
+                nfa->transitions[i][j][k] = -1;
+            }
+        }
+    }
+}
+
+// Function to add a transition to the NFA
+void addTransition(struct NFA *nfa, int fromState, int symbol, int toState) {
+    nfa->transitions[fromState][symbol][toState] = 1;
+}
+
+// Function to add a final state to the NFA
+void addFinalState(struct NFA *nfa, int state) {
+    nfa->finalStates[nfa->numFinalStates++] = state;
+}
+
+// Function to simulate NFA on input string
+bool simulateNFA(struct NFA *nfa, const char *input) {
+    int currentState = nfa->initialState;
+    int inputLength = strlen(input);
+    bool currentStates[MAX_STATES] = {false};
+    bool nextStates[MAX_STATES] = {false};
+    
+    // Initially mark the initial state as active
+    currentStates[currentState] = true;
+    
+    // Iterate through the input string
+    for (int i = 0; i < inputLength; i++) {
+        char symbol = input[i];
+        
+        // For each active state, check its transitions
+        for (int state = 0; state < nfa->numStates; state++) {
+            if (currentStates[state]) {
+                // Check all possible transitions for this state and symbol
+                for (int nextState = 0; nextState < nfa->numStates; nextState++) {
+                    if (nfa->transitions[state][symbol][nextState] == 1) {
+                        nextStates[nextState] = true;
+                    }
+                }
+            }
+        }
+        
+        // Update current states for the next iteration
+        memcpy(currentStates, nextStates, sizeof(currentStates));
+        memset(nextStates, false, sizeof(nextStates));
+    }
+    
+    // Check if any final state is active after processing the input
+    for (int i = 0; i < nfa->numFinalStates; i++) {
+        if (currentStates[nfa->finalStates[i]]) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+int main() {
+    // Example of building an NFA
+    struct NFA nfa;
+    initNFA(&nfa, 3, 2); // Three states, two symbols
+    
+    addTransition(&nfa, 0, 'a', 0); // Transition from state 0 to state 0 on symbol 'a'
+    addTransition(&nfa, 0, 'b', 0); // Transition from state 0 to state 0 on symbol 'b'
+    addTransition(&nfa, 0, 'b', 1); // Transition from state 0 to state 1 on symbol 'b'
+    addTransition(&nfa, 1, 'a', 2); // Transition from state 1 to state 2 on symbol 'a'
+    addFinalState(&nfa, 2);        // State 2 is a final state
+    
+    // Test the NFA with some input strings
+    const char *inputs[] = {"a", "b", "bb", "ab", "ba", "bab", NULL};
+    
+    for (int i = 0; inputs[i] != NULL; i++) {
+        bool accepted = simulateNFA(&nfa, inputs[i]);
+        printf("Input \"%s\" is %s\n", inputs[i], accepted ? "accepted" : "rejected");
+    }
+    
+    return 0;
+}
